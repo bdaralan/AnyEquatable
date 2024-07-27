@@ -1,5 +1,5 @@
 import XCTest
-@testable import AnyEquatable
+import AnyEquatable
 
 final class AnyEquatableTests: XCTestCase {
     
@@ -38,7 +38,14 @@ final class AnyEquatableTests: XCTestCase {
         XCTAssertTrue(value2 != value1)
     }
     
-    func test_parameter_packs_unmatched_type_and_argument_count_not_equal() {
+    func test_parameter_packs_unmatched_type_not_equal() {
+        let value1 = AnyEquatable(1)
+        let value2 = AnyEquatable(1.0)
+        XCTAssertTrue(value1 != value2)
+        XCTAssertTrue(value2 != value1)
+    }
+    
+    func test_parameter_packs_unmatched_type_and_argument_not_equal() {
         let value1 = AnyEquatable(1)
         let value2 = AnyEquatable(true, "string")
         XCTAssertTrue(value1 != value2)
@@ -83,19 +90,28 @@ final class AnyEquatableTests: XCTestCase {
         XCTAssertTrue(value2 != value1)
     }
     
-    func test_nest_AnyEquatable() {
-        let value1 = AnyEquatable(AnyEquatable(1))
-        let value2 = AnyEquatable(1)
+    func test_nested_AnyEquatable_equal() {
+        let value1 = AnyEquatable(1)
+        let value2 = AnyEquatable(AnyEquatable(1))
         XCTAssertTrue(value1 == value2)
-//        let value1 = AnyHashable(AnyHashable(AnyHashable(1)))
-//        let value2 = AnyHashable(1)
-//        XCTAssertTrue(value1 == value2)
+        XCTAssertTrue(value2 == value1)
     }
     
-//    func test_resolve_nested_type() {
-//        let value1 = AnyEquatable(1)
-//        let value2 = AnyEquatable(AnyEquatable(2))
-//        XCTAssertTrue(type(of: value1.base).self == Int.self)
-//        XCTAssertTrue(type(of: value2.base).self == Int.self)
-//    }
+    func test_nested_AnyEquatable_note_equal() {
+        let value1 = AnyEquatable(1)
+        let value2 = AnyEquatable(AnyEquatable(2))
+        XCTAssertTrue(value1 != value2)
+        XCTAssertTrue(value2 != value1)
+    }
+    
+    func test_nested_type_resolve_to_base() {
+        let value1 = AnyEquatable(1)
+        let value2 = AnyEquatable(AnyEquatable(2))
+        let value3 = AnyEquatable(AnyEquatable(AnyEquatable(3)))
+        let value4 = AnyEquatable(AnyEquatable(AnyEquatable(AnyEquatable(4))))
+        XCTAssertTrue(value1.base is Int)
+        XCTAssertTrue(value2.base is Int)
+        XCTAssertTrue(value3.base is Int)
+        XCTAssertTrue(value4.base is Int)
+    }
 }

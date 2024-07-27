@@ -20,38 +20,24 @@ public struct AnyEquatable: Equatable {
         }
     }
     
-    private static func innerContainer(for container: AnyEquatable) -> AnyEquatable {
-        var container = container
-        while let base = container.base as? AnyEquatable {
-            container = base
-        }
-        return container
-    }
-    
     public static func == (lhs: AnyEquatable, rhs: AnyEquatable) -> Bool {
-        let lhs = innerContainer(for: lhs)
-        let rhs = innerContainer(for: rhs)
-        return lhs.equals(lhs.base, rhs.base)
+        lhs.equals(lhs.base, rhs.base)
     }
     
     public static func == (lhs: some Equatable, rhs: AnyEquatable) -> Bool {
-        let rhs = innerContainer(for: rhs)
-        return rhs.equals(lhs, rhs.base)
+        rhs.equals(lhs, rhs.base)
     }
     
     public static func == (lhs: AnyEquatable, rhs: some Equatable) -> Bool {
-        let lhs = innerContainer(for: lhs)
-        return lhs.equals(lhs.base, rhs)
+        lhs.equals(lhs.base, rhs)
     }
     
     public static func != (lhs: some Equatable, rhs: AnyEquatable) -> Bool {
-        let rhs = innerContainer(for: rhs)
-        return rhs.equals(lhs, rhs.base) == false
+        rhs.equals(lhs, rhs.base) == false
     }
     
     public static func != (lhs: AnyEquatable, rhs: some Equatable) -> Bool {
-        let lhs = innerContainer(for: lhs)
-        return lhs.equals(lhs.base, rhs) == false
+        lhs.equals(lhs.base, rhs) == false
     }
 }
 
@@ -70,6 +56,26 @@ extension AnyEquatable {
         self.init(base: base) { lhs, rhs in
             return lhs == rhs
         }
+    }
+    
+    /// Creates a type-erased equatable value from another `AnyEquatable`.
+    ///
+    /// ``` swift
+    /// let value1 = AnyEquatable(AnyEquatable(4))
+    /// let value2 = AnyEquatable(4)
+    /// print(value1 == value2) // true
+    /// print(value1.base is Int) // true
+    /// ```
+    public init(_ base: AnyEquatable) {
+        guard base.base is AnyEquatable else {
+            self = base
+            return
+        }
+        var base = base.base as! AnyEquatable
+        while let erasure = base.base as? AnyEquatable {
+            base = erasure
+        }
+        self = base
     }
 }
 
