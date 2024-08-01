@@ -1,7 +1,7 @@
-import Foundation
-
 /// A type-erased equatable value.
 ///
+/// The `AnyEquatable` type forwards equality comparisons to an underlying equatable value.
+/// 
 public struct AnyEquatable: Equatable {
     
     /// The wrapped equatable value.
@@ -41,22 +41,9 @@ public struct AnyEquatable: Equatable {
     }
 }
 
-// MARK: - Equatable Constructor
+// MARK: - Constructors
 
 extension AnyEquatable {
-    
-    /// Creates a type-erased equatable value that wraps the given value.
-    ///
-    /// ``` swift
-    /// let value1 = AnyEquatable(4)
-    /// let value2 = AnyEquatable(4)
-    /// print(value1 == value2) // true
-    /// ```
-    public init<Value>(_ base: Value) where Value: Equatable {
-        self.init(base: base) { lhs, rhs in
-            return lhs == rhs
-        }
-    }
     
     /// Creates a type-erased equatable value from another `AnyEquatable`.
     ///
@@ -67,21 +54,11 @@ extension AnyEquatable {
     /// print(value1.base is Int) // true
     /// ```
     public init(_ base: AnyEquatable) {
-        guard base.base is AnyEquatable else {
-            self = base
-            return
+        switch base.base {
+        case let baseBase as AnyEquatable: self = baseBase
+        default: self = base
         }
-        var base = base.base as! AnyEquatable
-        while let erasure = base.base as? AnyEquatable {
-            base = erasure
-        }
-        self = base
     }
-}
-
-// MARK: - Parameter Packs Constructor
-
-extension AnyEquatable {
     
     /// Creates a type-erased equatable value that wraps the given parameter packs.
     /// 
@@ -101,13 +78,22 @@ extension AnyEquatable {
             }
         }
     }
+}
+
+// MARK: - Helpers
+
+extension AnyEquatable {
+    
+    /// An error to throw when two values are not equal.
+    ///
+    private struct NotEqualError: Error {}
     
     /// A helper method for iterating parameter packs to check for equality and throw to return early.
     ///
     /// For more detail, see [Why Pack Iteration?][documentation] documentation.
     ///
     /// [documentation]: https://www.swift.org/blog/pack-iteration/#why-pack-iteration
-    private static func equals<T>(lhs: T, rhs: T) throws where T: Equatable {
-        guard lhs == rhs else { throw NSError(domain: "not-equal", code: 0) }
+    private static func equals<Value>(lhs: Value, rhs: Value) throws where Value: Equatable {
+        guard lhs == rhs else { throw NotEqualError() }
     }
 }
